@@ -1,5 +1,6 @@
 {
   "name": "shiptivity-api",
+  "type": "module",
   "version": "1.0.0",
   "description": "The Backend of Shiptivity",
   "main": "index.js",
@@ -22,8 +23,9 @@
   },
   "homepage": "https://github.com/insidesherpa/shiptivity-2#readme",
   "dependencies": {
-    "better-sqlite3": "^5.4.0",
-    "express": "^4.16.4"
+    "better-sqlite3": "^12.11.1",
+    "express": "^4.16.4",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",

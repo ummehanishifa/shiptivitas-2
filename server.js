@@ -4,6 +4,12 @@ import Database from 'better-sqlite3';
 const app = express();
 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 app.get('/', (req, res) => {
   return res.status(200).send({'message': 'SHIPTIVITY API. Read documentation to see API docs'});
@@ -125,11 +131,36 @@ app.put('/api/v1/clients/:id', (req, res) => {
   let clients = db.prepare('select * from clients').all();
   const client = clients.find(client => client.id === id);
 
-  /* ---------- Update code below ----------*/
+ /* ---------- Update code below ----------*/
 
+if (status) {
+  // Update the status of the client
+  db.prepare('update clients set status = ? where id = ?').run(status, id);
+}
 
+if (priority !== undefined) {
+  const currentClient = db.prepare('select * from clients where id = ?').get(id);
+  const currentStatus = status || currentClient.status;
 
-  return res.status(200).send(clients);
+  // Get all clients in the same swimlane except the current one
+  const sameStatusClients = db.prepare(
+    'select * from clients where status = ? and id != ? order by priority'
+  ).all(currentStatus, id);
+
+  // Insert current client at the new priority position
+  sameStatusClients.splice(priority - 1, 0, { ...currentClient, status: currentStatus });
+
+  // Re-assign priorities 1, 2, 3... to all clients in that lane
+  sameStatusClients.forEach((c, index) => {
+    db.prepare('update clients set priority = ?, status = ? where id = ?')
+      .run(index + 1, currentStatus, c.id);
+  });
+}
+
+// Return all updated clients
+clients = db.prepare('select * from clients').all();
+
+return res.status(200).send(clients);
 });
 
 app.listen(3001);
